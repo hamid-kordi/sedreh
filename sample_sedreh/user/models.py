@@ -3,6 +3,7 @@ from django.contrib.auth.models import PermissionsMixin, AbstractBaseUser, Abstr
 from .managers import UserManagers
 from django.utils import timezone
 from book.models import Book
+from tasks import celery_increaseـtheـbudget, celery_buy_book, celery_return_book
 
 # Create your models here.
 
@@ -29,13 +30,22 @@ class User(AbstractBaseUser, PermissionsMixin):
         return self.is_superuser
 
     def increaseـtheـbudget(self, user_id, code):
-        pass
+        if user_id and code:
+            task = celery_increaseـtheـbudget.delay(user_id, code)
+        else:
+            raise ValueError("user_id and code is necessary")
 
-    def budget_cuts(self, user_id, book_id):
-        pass
+    def buy_book(self, user_id, book_id):
+        if user_id and book_id:
+            task = celery_buy_book.delay(user_id, book_id)
+        else:
+            raise ValueError("user_id and book_id is necessary")
 
     def return_the_book(self, user_id, book_id):
-        pass
+        if user_id and book_id:
+            task = celery_return_book(user_id, book_id)
+        else:
+            raise ValueError("user_id and book_id is necessary")
 
 
 class OtpCode(models.Model):
