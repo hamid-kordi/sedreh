@@ -3,14 +3,19 @@ from rest_framework.viewsets import ViewSet, ModelViewSet
 from .models import User, OtpCode, Library
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.decorators import action
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, OpenApiResponse
 from rest_framework import status
 from .serializers import (
     UserEditSerializer,
     UserRegisterSerializer,
     OtpCodeSerializer,
     LibrarySerializer,
+    IncreaseBudgetSerializer,
+    BuyBookSerializer,
+    RuternSerializer,
 )
+from .tasks import celery_buy_book, celery_increaseـtheـbudget, celery_return_book
+from rest_framework.views import APIView
 
 
 class ViewUserRegisteration(ViewSet):
@@ -77,3 +82,59 @@ class OtpCodeView(ModelViewSet):
     queryset = OtpCode.objects.all()
     serializer_class = OtpCodeSerializer
     permission_classes = []
+
+
+class BudgetManage(ViewSet):
+    @extend_schema(
+        request=IncreaseBudgetSerializer,
+        responses={202: OpenApiResponse},
+        description="Increase the user's budget using OTP code.",
+    )
+    @action(detail=False, methods=["post"])
+    def increaseـtheـbudget(self, request):
+        username = request.data.get("username")
+        code = request.data.get("code")
+        if username and code:
+            task = celery_increaseـtheـbudget(username, code)
+            return Response({"task_id": task.id}, status=status.HTTP_202_ACCEPTED)
+        else:
+            return Response(
+                {"error": "username and code is necassery"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+    @extend_schema(
+        request=BuyBookSerializer,
+        responses={202: OpenApiResponse},
+        description="buy book for users",
+    )
+    @action(detail=False, methods=["post"])
+    def buy_book(self, request):
+        username = request.data.get("username")
+        book_id = request.data.get("book_id")
+        if username and book_id:
+            task = celery_buy_book.delay(username, book_id)
+            return Response({"task_id": task.id}, status=status.HTTP_202_ACCEPTED)
+        else:
+            return Response(
+                {"error": "username and book_id is necassery"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+    @extend_schema(
+        request=RuternSerializer,
+        responses={202: OpenApiResponse},
+        description="return book for the user's library .",
+    )
+    @action(detail=False, methods=["post"])
+    def return_book(self, request):
+        username = request.data.get("username")
+        book_id = request.data.get("book_id")
+        if username and book_id:
+            task = celery_return_book.delay(username, book_id)
+            return Response({"task_id": task.id}, status=status.HTTP_202_ACCEPTED)
+        else:
+            return Response(
+                {"error": "username and book_id is necassery"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
