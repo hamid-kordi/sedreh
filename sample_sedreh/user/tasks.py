@@ -23,9 +23,9 @@ def celery_increaseـtheـbudget(username, code):
 
 
 @shared_task
-def celery_buy_book(user_id, book_id):
+def celery_buy_book(username, book_id):
     try:
-        user = User.objects.filter(user_id=user)
+        user = User.objects.filter(username=username)
         book = Book.objects.get(id=book_id)
         if Library.objects.filter(book=book, user=user):
             return "This book is already in your library."
@@ -42,9 +42,9 @@ def celery_buy_book(user_id, book_id):
 
 
 @shared_task
-def celery_return_book(user_id, book_id):
+def celery_return_book(username, book_id):
     try:
-        user = User.objects.get(id=user_id)
+        user = User.objects.get(username=username)
         book = Book.objects.get(id=book_id)
 
         library_entry = Library.objects.filter(user=user, book=book).first()
