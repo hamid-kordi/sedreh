@@ -31,11 +31,12 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         if data["password"] != data["password2"]:
             raise serializers.ValidationError("password 1and 2 not match")
         return data
-    
+
     def validate_email(self, value):
         if User.objects.filter(email=value).exists():
             raise serializers.ValidationError("This email is already in use.")
         return value
+
 
 class UserEditSerializer(serializers.ModelSerializer):
     class Meta:
@@ -63,3 +64,17 @@ class LibrarySerializer(serializers.ModelSerializer):
     class Meta:
         model = Library
         fields = ("user", "book")
+
+
+class IncreaseBudgetSerializer(serializers.Serializer):
+    username = serializers.CharField(required=True)
+    code = serializers.IntegerField(required=True)
+
+
+class BuyBookSerializer(serializers.Serializer):
+    username = serializers.CharField(required=True)
+    bookId = serializers.IntegerField(required = True)
+
+class RuternSerializer(serializers.Serializer):
+    username = serializers.CharField(required=True)
+    bookId = serializers.IntegerField(required = True)
