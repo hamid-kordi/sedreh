@@ -1,6 +1,5 @@
 from django.db import models
 from django.urls import reverse
-from ckeditor.fields import RichTextField
 
 # from ckeditor.fields import RichTextField
 # Create your models here.
@@ -15,8 +14,7 @@ class Category(models.Model):
         blank=True,
     )
     is_sub = models.BooleanField(default=False)
-    name = models.CharField(max_length=200)
-    slug = models.SlugField(max_length=200, unique=True)
+    name = models.CharField(max_length=200, unique=True)
 
     class Meta:
         ordering = ("name",)
@@ -28,11 +26,9 @@ class Category(models.Model):
 
 
 class Book(models.Model):
-    category = models.ManyToManyField(Category, related_name="products")
-    name = models.CharField(max_length=200)
-    slug = models.SlugField(max_length=200, unique=True)
-    image = models.ImageField()
-    description = RichTextField(blank=True, null=True)
+    category = models.ManyToManyField(Category, related_name="books")
+    name = models.CharField(max_length=200, unique=True)
+    description = models.TextField(blank=True, null=True)
     price = models.IntegerField()
     available = models.BooleanField(default=True)
     created = models.DateTimeField(auto_now_add=True)
