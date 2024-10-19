@@ -16,7 +16,7 @@ Including another URLconf
 """
 
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -54,6 +54,8 @@ urlpatterns_spectacular = [
 urlpatterns = (
     [
         path("admin/", admin.site.urls),
+        path("user/", include("user.urls", namespace="accounts")),
+        path("book/", include("book.urls", namespace="books")),
     ]
     + urlpatterns_spectacular
     + urlpatterns_jwt

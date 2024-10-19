@@ -4,7 +4,7 @@ import django
 from django.conf import settings
 from datetime import timedelta
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "sedreh.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "sample_sedreh.settings")
 django.setup()
 app = Celery("sedreh")
 app.config_from_object("django.conf:settings", namespace="CELERY")

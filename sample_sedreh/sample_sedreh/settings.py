@@ -88,7 +88,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "sample_sedreh.wsgi.application"
-
+AUTH_USER_MODEL = "user.User"
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
@@ -96,7 +96,7 @@ WSGI_APPLICATION = "sample_sedreh.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.environ.get("POSTGRES_DB", "shahkar"),
+        "NAME": os.environ.get("POSTGRES_DB", "postgres"),
         "USER": os.environ.get("POSTGRES_USER", "username"),
         "PASSWORD": os.environ.get("POSTGRES_PASSWORD", "1234"),
         "HOST": os.environ.get("POSTGRES_HOST", "postgres"),
@@ -112,8 +112,8 @@ REST_FRAMEWORK = {
     ),
 }
 SPECTACULAR_SETTINGS = {
-    "TITLE": "Shahkar API",
-    "DESCRIPTION": "Shahkar system API design with high traffic management",
+    "TITLE": "sedreh API",
+    "DESCRIPTION": "sedreh system API design with high traffic management",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,

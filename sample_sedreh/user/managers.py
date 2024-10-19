@@ -4,7 +4,7 @@ from rest_framework import status
 
 
 class UserManagers(BaseUserManager):
-    def create(self, username, email, password):
+    def create_user(self, username, email, password):
         if not email:
             raise ValueError("The Email field must be set.")
         if not username:
@@ -15,12 +15,13 @@ class UserManagers(BaseUserManager):
         user = self.model(username=username, email=email)
         user = self.model(username=username)
         user.set_password(password)
-        user.save()
+        user.save(using=self._db)
         return user
 
     def create_superuser(self, username, email, password=None):
         user = self.create_user(username=username, email=email, password=password)
         user.is_admin = True
         user.is_superuser = True
+        user.is_active = True
         user.save(using=self._db)
         return user
