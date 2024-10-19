@@ -33,7 +33,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 
 class OtpCode(models.Model):
-    email = models.ForeignKey("User", on_delete=models.CASCADE, related_name="usercode")
+    user = models.ForeignKey("User", on_delete=models.CASCADE, related_name="usercode")
     code = models.PositiveSmallIntegerField(blank=True, null=True)
     created = models.DateTimeField(auto_now=True)
     price = models.IntegerField(default=0, null=False, blank=True)
@@ -47,3 +47,4 @@ class OtpCode(models.Model):
 class Library(models.Model):
     user = models.ForeignKey("User", on_delete=models.CASCADE, related_name="libuser")
     book = models.ForeignKey(Book, on_delete=models.CASCADE, related_name="libbook")
+    added = models.DateTimeField(auto_now=True)
