@@ -56,7 +56,7 @@ class UserEditSerializer(serializers.ModelSerializer):
 class OtpCodeSerializer(serializers.ModelSerializer):
     class Meta:
         model = OtpCode
-        fields = ("email", "code", "created", "price", "expiration_date")
+        fields = ("user", "code", "created", "price", "expiration_date")
 
 
 class LibrarySerializer(serializers.ModelSerializer):
