@@ -16,6 +16,8 @@ services:
 
   redis:
     image: redis:alpine
+    ports:
+    - "6379:6379"
 
 
 
@@ -38,7 +40,7 @@ services:
     build: . 
     image: celery
     container_name: celery_sedreh
-    command: celery --app sample_sedreh worker --concurrency=4
+    command: celery --app sample_sedreh worker -E --concurrency=4 --loglevel=info
     environment:
       - DATABASE_URL=postgres://username:1234@db:5432/postgres
       - REDIS_URL=redis://redis:6379/0
