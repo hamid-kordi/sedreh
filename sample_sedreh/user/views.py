@@ -3,7 +3,7 @@ from rest_framework.viewsets import ViewSet, ModelViewSet
 from .models import User, OtpCode, Library
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.decorators import action
-from drf_spectacular.utils import extend_schema, OpenApiResponse
+from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiParameter
 from rest_framework import status
 from .serializers import (
     UserEditSerializer,
@@ -13,24 +13,31 @@ from .serializers import (
     IncreaseBudgetSerializer,
     BuyBookSerializer,
     RuternSerializer,
+    UserShowDtat,
 )
+from celery.result import AsyncResult
 from .tasks import celery_buy_book, celery_increaseـtheـbudget, celery_return_book
 from rest_framework.views import APIView
 
 
 class ViewUserRegisteration(ViewSet):
     query_set = User.objects.all()
-    # authentication_classes = [JWTAuthentication]
+
+    authentication_classes = [JWTAuthentication]
     # permission_classes = (IsAuthenticated, IsUser)
 
     def retrieve(self, request, pk=None):
-        users = User.objects.filter(pk=pk)
-        if users:
-            ser_data = UserRegisterSerializer(users)
+        try:
+            user = User.objects.get(pk=pk)
+            ser_data = UserRegisterSerializer(user)
             return Response(ser_data.data)
-        else:
+        except User.DoesNotExist:
             return Response(
-                data={"user does not exist"}, status=status.HTTP_404_NOT_FOUND
+                data={"error": "user does not exist"}, status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
     # @action(detail=True, methods=["get"])
@@ -47,7 +54,7 @@ class ViewUserRegisteration(ViewSet):
     def create(self, request):
         ser_data = UserRegisterSerializer(data=request.data)
         if ser_data.is_valid():
-            ser_data.save()
+            ser_data.create()
             return Response(ser_data.data, status=status.HTTP_201_CREATED)
         return Response(ser_data.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -73,38 +80,45 @@ class ViewUserRegisteration(ViewSet):
 
 
 class LibraryView(ModelViewSet):
+    authentication_classes = [JWTAuthentication]
     queryset = Library.objects.all()
     serializer_class = LibrarySerializer
-    permission_classes = []
 
 
 class OtpCodeView(ModelViewSet):
+    authentication_classes = [JWTAuthentication]
     queryset = OtpCode.objects.all()
     serializer_class = OtpCodeSerializer
-    permission_classes = []
 
 
 class BudgetManage(ViewSet):
+    authentication_classes = [JWTAuthentication]
+    """
+    To increase the amount of the wallet and also to return the book
+    and also to buy the book
+
+    """
+
     @extend_schema(
-        request=IncreaseBudgetSerializer,
         responses={202: OpenApiResponse},
         description="Increase the user's budget using OTP code.",
     )
     @action(detail=False, methods=["post"])
     def increaseـtheـbudget(self, request):
         username = request.data.get("username")
+        user = User.objects.filter(username=username).first()
         code = request.data.get("code")
-        if username and code:
-            task = celery_increaseـtheـbudget(username, code)
+        if (user is not None) and code:
+            user_id = user.id
+            task = celery_increaseـtheـbudget.delay(user_id, code)
             return Response({"task_id": task.id}, status=status.HTTP_202_ACCEPTED)
         else:
             return Response(
-                {"error": "username and code is necassery"},
+                {"error": "user or code not found"},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
     @extend_schema(
-        request=BuyBookSerializer,
         responses={202: OpenApiResponse},
         description="buy book for users",
     )
@@ -137,4 +151,32 @@ class BudgetManage(ViewSet):
             return Response(
                 {"error": "username and book_id is necassery"},
                 status=status.HTTP_404_NOT_FOUND,
+            )
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="task_id",
+                description="task result",
+                required=True,
+                type=str,
+            )
+        ],
+        description="Get user data",
+    )
+    @action(detail=False, methods=["get"])
+    def get_task_detail(self, request):
+        task_id = request.query_params.get("task_id")
+        if not task_id:
+            return Response({"error": "task_id is required"}, status=400)
+        result = AsyncResult(id=task_id)
+        if result.state == "PENDING":
+            return Response({"status": "Pending"}, status=202)
+        elif result.state == "SUCCESS":
+            return Response(result.result, status=200)
+        elif result.state == "STARTED":
+            return Response({"status": "Started"}, status=202)
+        else:
+            return Response(
+                {"status": result.state, "message": str(result.info)}, status=400
             )
